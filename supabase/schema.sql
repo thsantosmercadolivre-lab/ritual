@@ -38,6 +38,10 @@ begin
   insert into public.profiles (user_id, nome, email)
   values (new.id, coalesce(new.raw_user_meta_data->>'nome', ''), coalesce(new.email, ''))
   on conflict (user_id) do nothing;
+  -- A conta da Andresa vira dona do painel sozinha ao ser criada.
+  if lower(new.email) = 'andresa.sa@live.com' then
+    insert into public.admins (user_id) values (new.id) on conflict do nothing;
+  end if;
   return new;
 end;
 $$;
