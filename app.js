@@ -235,7 +235,7 @@ const me = () => db.session && db.users[db.session];
 function render() {
   const u = me();
   if (!u) return renderLogin();
-  if (u.role === 'admin') return ui.client ? renderClientDetail(ui.client) : renderPanel();
+  if (u.role === 'admin') return ui.admin === 'tutorial' ? renderTutorial() : ui.client ? renderClientDetail(ui.client) : renderPanel();
   const views = { today: renderToday, week: renderWeek, badges: renderBadges };
   app.innerHTML = `
     <div class="wrap">
@@ -455,6 +455,97 @@ function clientStats(email) {
     flags,
   };
 }
+/* topo do painel com as abas Clientes e Tutorial */
+function adminTop() {
+  const on = ui.admin === 'tutorial' ? 'tutorial' : 'clientes';
+  return `<header class="top admin-top">
+      <span class="brand">Ritual <span class="brand-sub">Painel da Andresa</span></span>
+      <nav class="atabs" aria-label="Painel">
+        <button data-a="atab" data-v="clientes" class="${on === 'clientes' ? 'on' : ''}">Clientes</button>
+        <button data-a="atab" data-v="tutorial" class="${on === 'tutorial' ? 'on' : ''}">Tutorial</button>
+      </nav>
+      <button class="link" data-a="logout">Sair</button>
+    </header>`;
+}
+
+const appLink = () => location.origin + location.pathname.replace(/index\.html$/, '');
+const inviteMsg = () => `Oi! A partir de agora a gente vai acompanhar o seu dia pelo Ritual. Entra em ${appLink()} , toca em "Primeira vez? Criar conta" e cadastra seu nome, e-mail e uma senha. Depois salva na tela inicial do celular para abrir como aplicativo. Todo dia, antes de dormir, marca seus hábitos, dá a nota do sono e do emocional e toca em "Fechar o dia". Leva um minuto.`;
+
+function renderTutorial() {
+  app.innerHTML = `
+    <div class="wrap wide">
+      ${adminTop()}
+      <section class="panel-h">
+        <h1>Como o Ritual funciona</h1>
+        <p class="sub">O caminho da sua cliente, do convite ao painel, e o que você acompanha daqui.</p>
+      </section>
+
+      <div class="two tut">
+        <section class="panel">
+          <div class="panel-head"><h2>Convide suas clientes</h2></div>
+          <p class="tut-p">Mande o link do app. Cada cliente cria a própria conta em menos de um minuto, sem código e sem baixar nada.</p>
+          <div class="linkbox"><span>${esc(appLink())}</span><button class="copy" data-a="copy" data-what="link">Copiar link</button></div>
+          <p class="flabel" style="margin-top:16px">Mensagem pronta para o WhatsApp</p>
+          <div class="msg">${esc(inviteMsg())}</div>
+          <button class="copy" style="margin-top:10px" data-a="copy" data-what="msg">Copiar mensagem</button>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h2>O que você vê no painel</h2></div>
+          <dl class="tut-dl">
+            <dt>Lista de clientes</dt>
+            <dd>Quem já fechou o dia hoje, a sequência de dias seguidos e as médias dos últimos 7 dias de sono, emocional e dieta.</dd>
+            <dt>Sinais em vermelho</dt>
+            <dd><b>Emocional baixo</b> ou <b>Sono ruim</b> quando a nota foi 1 ou 2 em dois dos últimos três dias. <b>Sem registro</b> quando ela passou 2 dias ou mais sem fechar o dia. Quem tem sinal aparece primeiro.</dd>
+            <dt>Tempo real</dt>
+            <dd>Quando uma cliente fecha o dia, o painel atualiza sozinho, sem recarregar a página.</dd>
+            <dt>Detalhe da cliente</dt>
+            <dd>Toque no nome para ver os últimos 14 dias, a leitura do que mexe com a dieta dela (cruza os escapes com o sono e o emocional e aponta o gatilho mais provável) e tudo o que ela escreveu nos porquês.</dd>
+          </dl>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="panel-head"><h2>O caminho da cliente</h2><span>como ela usa no dia a dia</span></div>
+        <ol class="steps">
+          <li><h3>Cria a conta</h3><p>Abre o link, toca em <b>Primeira vez? Criar conta</b> e coloca nome, e-mail e uma senha de pelo menos 6 caracteres. Entra na hora.</p></li>
+          <li><h3>Salva na tela inicial</h3><p><b>iPhone:</b> no Safari, botão Compartilhar e depois Adicionar à Tela de Início. <b>Android:</b> no Chrome, menu de três pontos e depois Adicionar à tela inicial. Fica com ícone, como um aplicativo.</p></li>
+          <li><h3>Preenche o dia na aba Hoje</h3><p>Marca treino, dieta, água e cardio. Dá nota de 1 a 5 para sono, emocional e produtividade. Quando a nota é 1 ou 2, o app pede para ela escrever o que aconteceu.</p></li>
+          <li><h3>Fecha o dia</h3><p>Toca em <b>Fechar o dia</b>, ganha os pontos e soma mais um dia na sequência. Dá para ajustar até a meia-noite.</p></li>
+          <li><h3>Acompanha a evolução</h3><p>Na aba <b>Semana</b> vê a grade dos 7 dias, a leitura do que mexe com a dieta e os próprios porquês. Na aba <b>Conquistas</b> vê o nível e as medalhas.</p></li>
+        </ol>
+      </section>
+
+      <div class="two tut">
+        <section class="panel">
+          <div class="panel-head"><h2>Como ela ganha pontos</h2></div>
+          <table class="mini">
+            <tr><td>Cada hábito marcado</td><td class="r">10</td></tr>
+            <tr><td>Cada escala preenchida</td><td class="r">5</td></tr>
+            <tr><td>Escrever o porquê</td><td class="r">5</td></tr>
+            <tr><td>Fechar o dia</td><td class="r">10</td></tr>
+            <tr><td>Cada dia de sequência</td><td class="r">5</td></tr>
+          </table>
+          <p class="tut-p" style="margin-top:14px">Níveis: ${LEVELS.map(l => `${l.n}${l.p ? ` (${fmt(l.p)})` : ''}`).join(', ')}. Medalhas: ${BADGES.map(b => b.t).join(', ')}.</p>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h2>Dúvidas comuns</h2></div>
+          <dl class="tut-dl">
+            <dt>Ela esqueceu a senha</dt>
+            <dd>Na tela de entrada, <b>Esqueci a senha</b>. O link chega no e-mail dela em alguns minutos.</dd>
+            <dt>Uma cliente vê as outras?</dt>
+            <dd>Não. Cada cliente vê só os próprios dias. Só você vê todas.</dd>
+            <dt>Trocou de celular</dt>
+            <dd>É só entrar de novo com e-mail e senha. Tudo fica salvo na nuvem.</dd>
+            <dt>Precisa de internet?</dt>
+            <dd>Sim, para salvar. Se a conexão cair, aparece um aviso na tela.</dd>
+          </dl>
+        </section>
+      </div>
+    </div>`;
+}
+
 function renderPanel() {
   const clients = Object.entries(db.users).filter(([, u]) => u.role === 'client');
   const rows = clients.map(([e, u]) => ({ e, u, s: clientStats(e) }))
@@ -463,7 +554,7 @@ function renderPanel() {
   const avgEmo = avg(rows.map(r => r.s.emo).filter(v => v != null));
   app.innerHTML = `
     <div class="wrap wide">
-      <header class="top"><span class="brand">Ritual <span class="brand-sub">Painel da Andresa</span></span><button class="link" data-a="logout">Sair</button></header>
+      ${adminTop()}
       <section class="panel-h">
         <h1>Bom dia, Andresa.</h1>
         <p class="sub">${longDate(today())}. ${attn ? `${attn} ${attn > 1 ? 'clientes pedem' : 'cliente pede'} atenção hoje.` : 'Nenhuma cliente pede atenção hoje.'}</p>
@@ -471,7 +562,7 @@ function renderPanel() {
       <div class="summary">
         <div><span class="num">${rows.length}</span><span class="lbl">clientes</span></div>
         <div><span class="num">${filled}</span><span class="lbl">fecharam o dia</span></div>
-        <div><span class="num" style="${attn ? 'color:var(--alert)' : ''}">${attn}</span><span class="lbl">pedem atenção</span></div>
+        <div><span class="num" style="${attn ? 'color:var(--negative)' : ''}">${attn}</span><span class="lbl">pedem atenção</span></div>
         <div><span class="num">${f1(avgEmo)}</span><span class="lbl">emocional médio</span></div>
       </div>
       <div class="tbl-card scroll"><table class="tbl">
@@ -485,7 +576,7 @@ function renderPanel() {
             <td class="r hide-m ${r.s.emo != null && r.s.emo < 2.6 ? 'lo' : ''}">${f1(r.s.emo)}</td>
             <td class="r hide-m">${r.s.dieta == null ? '' : r.s.dieta + '%'}</td>
             <td class="flag">${r.s.flags.join('<br>')}</td>
-          </tr>`).join('')}</tbody>
+          </tr>`).join('') || `<tr><td colspan="7" class="empty">Nenhuma cliente ainda. Na aba Tutorial tem o link e a mensagem pronta para convidar.</td></tr>`}</tbody>
       </table></div>
       <p class="hint" style="margin-top:18px">Atualiza sozinho quando uma cliente fecha o dia. Toque numa cliente para ver o detalhe.</p>
     </div>`;
@@ -495,7 +586,7 @@ function renderClientDetail(email) {
   const keys = lastDays(email, 14).map(x => x[0]);
   app.innerHTML = `
     <div class="wrap wide">
-      <header class="top"><span class="brand">Ritual <span class="brand-sub">Painel da Andresa</span></span><button class="link" data-a="logout">Sair</button></header>
+      ${adminTop()}
       <button class="link back" data-a="panel">Voltar para todas</button>
       <section class="panel-h" style="padding-top:18px">
         <h1>${esc(u.name)}</h1>
@@ -558,7 +649,7 @@ document.addEventListener('click', ev => {
     db.session = ui.email; save(); ui.view = 'today'; render();
   } else if (a === 'restart') { ui.step = 'email'; render(); }
   else if (a === 'demo') { db.session = b.dataset.e; save(); ui.view = "today"; ui.client = null; render(); window.scrollTo(0, 0); }
-  else if (a === 'logout') { if (LIVE) { sb.auth.signOut(); if (channel) { sb.removeChannel(channel); channel = null; } ui.step = 'login'; } else ui.step = 'email'; db.session = null; ui.client = null; save(); render(); }
+  else if (a === 'logout') { ui.admin = 'clientes'; if (LIVE) { sb.auth.signOut(); if (channel) { sb.removeChannel(channel); channel = null; } ui.step = 'login'; } else ui.step = 'email'; db.session = null; ui.client = null; save(); render(); }
   else if (a === 'mode') { ui.step = b.dataset.m; ui.err = ''; ui.ok = ''; render(); }
   else if (a === 'tab') { ui.view = b.dataset.v; render(); window.scrollTo(0, 0); }
   else if (a === 'habit') {
@@ -573,6 +664,13 @@ document.addEventListener('click', ev => {
   else if (a === 'dismiss') { overlay.hidden = true; render(); }
   else if (a === 'open') { ui.client = b.dataset.e; render(); window.scrollTo(0, 0); }
   else if (a === 'panel') { ui.client = null; render(); }
+  else if (a === 'atab') { ui.admin = b.dataset.v; ui.client = null; render(); window.scrollTo(0, 0); }
+  else if (a === 'copy') {
+    const txt = b.dataset.what === 'msg' ? inviteMsg() : appLink();
+    (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(
+      () => toast(b.dataset.what === 'msg' ? 'Mensagem copiada.' : 'Link copiado.'),
+      () => toast('Não deu para copiar. Selecione o texto e copie.'));
+  }
 });
 document.addEventListener('input', ev => {
   if (!ev.target.classList.contains('note')) return;
