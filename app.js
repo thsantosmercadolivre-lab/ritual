@@ -468,7 +468,7 @@ function adminTop() {
     </header>`;
 }
 
-const appLink = () => location.origin + location.pathname.replace(/index\.html$/, '');
+const appLink = () => 'https://ritual-andresa.pages.dev/';
 const inviteMsg = () => `Oi! A partir de agora a gente vai acompanhar o seu dia pelo Ritual. Entra em ${appLink()} , toca em "Primeira vez? Criar conta" e cadastra seu nome, e-mail e uma senha. Depois salva na tela inicial do celular para abrir como aplicativo. Todo dia, antes de dormir, marca seus hábitos, dá a nota do sono e do emocional e toca em "Fechar o dia". Leva um minuto.`;
 
 function renderTutorial() {
