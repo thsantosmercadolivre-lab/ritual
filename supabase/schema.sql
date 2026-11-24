@@ -71,6 +71,13 @@ drop policy if exists "admins: ver o seu" on public.admins;
 create policy "admins: ver o seu" on public.admins
   for select using (user_id = auth.uid());
 
+-- Acesso pela API só para quem está logado (as políticas acima filtram o resto).
+grant usage on schema public to authenticated;
+grant select, update on public.profiles to authenticated;
+grant select, insert, update on public.entries to authenticated;
+grant select on public.admins to authenticated;
+grant execute on function public.is_admin() to authenticated;
+
 -- Painel em tempo real.
 do $$ begin
   alter publication supabase_realtime add table public.entries;
